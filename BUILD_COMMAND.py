@@ -1,3 +1,5 @@
+import os
+
 # Goal: Write Datapack that sets up all display items
 DIR_OUTPUT = "./output/"
 armor_elements = ["boots", "leggings", "chestplate", "helmet"]
@@ -82,6 +84,9 @@ def makeSummon(x, y, z, material, trim, type):
     return out
 
 
+if not os.path.exists(DIR_OUTPUT):
+    os.mkdir(DIR_OUTPUT)
+
 trim_x_off = 1
 trim_commands = []
 for trim in trims:
@@ -108,6 +113,6 @@ for trim in trims:
 # print(commands)
 
 
-with open("{DIR_OUTPUT}load_all.mcfunction", "w") as file:
+with open(f"{DIR_OUTPUT}load_all.mcfunction", "w") as file:
     for cmd in commands:
         file.write(cmd + "\n")
