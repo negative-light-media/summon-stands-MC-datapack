@@ -22,6 +22,7 @@ trims = [
     "shaper",
     "host",
     "silence",
+    "vex"
 ]
 
 
