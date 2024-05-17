@@ -4,7 +4,7 @@ import zipfile
 
 # Goal: Write Datapack that sets up all display items
 VERSION = (1, 0, 0) # Major, Minor, Fix per semantic versioning v2 https://semver.org/
-MC_PACK_VERSION = 26
+MC_PACK_VERSION = 41
 DIR_OUTPUT = "./output"
 DIR_DATA = f"{DIR_OUTPUT}/data"
 DIR_PACK = f"{DIR_DATA}/summon-stands"
@@ -58,9 +58,9 @@ def getPos(x, y, z):
 def getItem(type, element, material=None, trim=None):
     # {id:"minecraft:leather_helmet", Count: 1b, tag: {Damage: 0, Trim: {material: "minecraft:iron", pattern: "minecraft:sentry"}}}
     retValue = "{"
-    retValue += f'id: "minecraft:{type}_{element}", Count:1b'
+    retValue += f'id: "minecraft:{type}_{element}", count: 1'
     if trim != None:
-        retValue += ", tag: { Trim: "
+        retValue += ", components: { \"minecraft:trim\":"
         retValue += "{"
         retValue += f'material: "minecraft:{material}", pattern: "minecraft:{trim}"'
         retValue += "}"
@@ -146,7 +146,7 @@ def main():
         print("Writing Pack meta data")
         mcmeta = {
             "pack": {
-                "pack_format": 26,
+                "pack_format": MC_PACK_VERSION,
                 "description": "Summon armor stands with all trims in all armor types."
             }
         }
@@ -164,3 +164,27 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    # 41 + component base format for Armor Items
+    # This can be retrived by doing `/data get entity <entity id> ArmorItems
+    """
+    Armor Stand has the following entity data: 
+    [
+        {}, 
+        {}, 
+        {}, 
+        {
+            components: 
+            {
+                "minecraft:trim": 
+                    {
+                        material: "minecraft:redstone", 
+                        pattern: "minecraft:sentry"
+                    }
+            }, 
+            count: 1, 
+            id: "minecraft:iron_helmet"
+        }
+    ]
+    """
