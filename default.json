@@ -1,0 +1,60 @@
+{
+    "pack_version": 45,
+    "start_offset": {
+        "x": 1,
+        "y": 0,
+        "z": -1
+    },
+    "directories": {
+        "output": "./output",
+        "build": "./output/build"
+    },
+    "armor": {
+        "elements": [
+            "boots",
+            "leggings",
+            "chestplate",
+            "helmet"
+        ],
+        "classes": [
+            "leather",
+            "iron",
+            "diamond",
+            "golden",
+            "chainmail",
+            "netherite"
+        ],
+        "trims": {
+            "types": [
+                "sentry",
+                "dune",
+                "coast",
+                "wild",
+                "ward",
+                "eye",
+                "tide",
+                "snout",
+                "rib",
+                "spire",
+                "wayfinder",
+                "raiser",
+                "shaper",
+                "host",
+                "silence",
+                "vex"
+            ],
+            "materials": [
+                "iron",
+                "copper",
+                "gold",
+                "lapis",
+                "emerald",
+                "diamond",
+                "netherite",
+                "redstone",
+                "amethyst",
+                "quartz"
+            ]
+        }
+    }
+}

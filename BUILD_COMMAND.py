@@ -3,19 +3,23 @@ from shutil import make_archive
 from pathlib import Path
 
 # Goal: Write Datapack that sets up all display items
-VERSION = (1, 0, 1) # Major, Minor, Fix per semantic versioning v2 https://semver.org/
+VERSION = (1, 1, 0) # Major, Minor, Fix per semantic versioning v2 https://semver.org/
 MC_PACK_VERSION = 61
-DIR_OUTPUT = "./output/"
+DIR_OUTPUT = "./output"
 BUILD_DIR = "./output/build"
 FUNC_DIR_NAME = "function"
 
+DEFAULT_CONFIG_FILE = "default.json"
+
 DIR_DATA = f"{BUILD_DIR}/data"
-DIR_PACK = f"{BUILD_DIR}/summon-stands"
-MC_NAMESPACE = f"{BUILD_DIR}/minecraft"
+DIR_PACK = f"{DIR_DATA}/summon-stands"
+MC_NAMESPACE = f"{DIR_DATA}/minecraft"
 MC_FUNC = f"{MC_NAMESPACE}/tags/{FUNC_DIR_NAME}"
 DIR_FUNC = f"{DIR_PACK}/{FUNC_DIR_NAME}"
 OUTPUT_FILE = f"{DIR_OUTPUT}/summon-stands_{MC_PACK_VERSION}_{VERSION[0]}.{VERSION[1]}.{VERSION[2]}"
 armor_elements = ["boots", "leggings", "chestplate", "helmet"]
+
+
 
 armor_class = ["leather", "iron", "diamond", "golden", "chainmail", "netherite"]
 
@@ -94,30 +98,29 @@ def makeSummon(x, y, z, material, trim, type):
     out += "}"
     return out
 
-def checkDirectories():
-    Path(DIR_FUNC).mkdir(parents=True, exist_ok=True)
-    Path(MC_FUNC).mkdir(parents=True, exist_ok=True)
+def checkDirectories(dirs: list[str]):
+    for dir in dirs:
+        Path(dir).mkdir(parents=True, exist_ok=True)
+    
 
 
         
-def main():
+def main(config):
 
-    x_off = 1
-    y_off = 0
-    z_off = -1
+    x_off = config["start_offset"]["x"]
+    y_off = config["start_offset"]["y"]
+    z_off = config["start_offset"]["z"]
     commands = []
     
-    checkDirectories()
-
     trim_x_off = 1
     trim_commands = []
     print("BUILDING TRIM COMMANDS")
-    for trim in trims:
+    for trim in config["armor"]["trims"]["types"]:
         # Generate Each Trim Type
-        for mat in materials:
+        for mat in config["armor"]["trims"]["materials"]:
             # Generate Command
-            for armor in armor_class:
-                print(f"{mat}-{trim}-{armor}")
+            for armor in config["armor"]["classes"]:
+                print(f"{trim}-{mat}-{armor}")
                 commands.append(f"setblock {getPos(x_off, y_off, z_off )} stone")
                 commands.append(makeSummon(x_off, 15, z_off, mat, trim, armor))
 
@@ -130,24 +133,24 @@ def main():
             z_off = -1
             y_off = 0
         trim_x_off = 1
-        with open(f"{DIR_FUNC}/load_{trim}.mcfunction", "w") as file:
+        with open(f'{config["directories"]["pack_func"]}/load_{trim}.mcfunction', "w") as file:
             for cmd in trim_commands:
                 file.write(cmd + "\n")
     # print(commands)
     print("#################################################################################")
 
 
-    with open(f"{DIR_FUNC}/load_all.mcfunction", "w") as file:
+    with open(f'{config["directories"]["pack_func"]}/load_all.mcfunction', "w") as file:
         print("WRITING LOAD ALL FUNCTION")
         for cmd in commands:
             file.write(cmd + "\n")
 
     # Add the load.mcfunction file
-    with open(f"{DIR_FUNC}/load.mcfunction", "w") as file:
+    with open(f'{config["directories"]["pack_func"]}/load.mcfunction', "w") as file:
         print("WRITING PACK LOAD FUNCTION")
         file.write("# Load all functions")
 
-    with open(f"{BUILD_DIR}/pack.mcmeta", "w") as file:
+    with open(f'{config["directories"]["build"]}/pack.mcmeta', "w") as file:
         print("Writing Pack meta data")
         mcmeta = {
             "pack": {
@@ -157,23 +160,42 @@ def main():
         }
         json.dump(mcmeta, file, indent=4)
         
-    with open(f"{MC_FUNC}/load.json", "w") as file:
+    with open(f'{config["directories"]["mc_func"]}/load.json', "w") as file:
         print("Writing Minecraft Load JSON")
         mcload = {
             "values": [
                 "summon-stands:load"
             ]
         }
+        json.dump(mcload,file, indent=4)
         
 
     # Create ZIP
     print("WRITING ZIP FILE")
     make_archive(OUTPUT_FILE, "zip", BUILD_DIR)
 
+def loadConfig(filename):
+    print("LOADING CONFIG")
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        
+    # Check if MC DP version is 45 or greater
+    func_dir_name = "functions" if data["pack_version"] < 45 else "function"
+    build_dir = data["directories"]["build"]
+    data["directories"]["mc_func"] = f"{build_dir}/minecraft/tags/{func_dir_name}"
+    data["directories"]["pack_dir"] = f"{build_dir}/summon-stands"
+    data["directories"]["pack_func"] = f"{build_dir}/summon-stands/{func_dir_name}"
+    
+    checkDirectories(data["directories"].values())
+    return data
 
 
 if __name__ == "__main__":
-    main()
+    
+    config = loadConfig(DEFAULT_CONFIG_FILE)
+    
+    
+    main(config)
 
 
     # 41 + component base format for Armor Items
