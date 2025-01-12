@@ -1,15 +1,20 @@
-import os
 import json
-import zipfile
+from shutil import make_archive
+from pathlib import Path
 
 # Goal: Write Datapack that sets up all display items
-VERSION = (1, 0, 0) # Major, Minor, Fix per semantic versioning v2 https://semver.org/
-MC_PACK_VERSION = 41
-DIR_OUTPUT = "./output"
-DIR_DATA = f"{DIR_OUTPUT}/data"
-DIR_PACK = f"{DIR_DATA}/summon-stands"
-DIR_FUNC = f"{DIR_PACK}/functions"
-OUTPUT_FILE = f"summon-stands_{MC_PACK_VERSION}_{VERSION[0]}.{VERSION[1]}.{VERSION[2]}.zip"
+VERSION = (1, 0, 1) # Major, Minor, Fix per semantic versioning v2 https://semver.org/
+MC_PACK_VERSION = 61
+DIR_OUTPUT = "./output/"
+BUILD_DIR = "./output/build"
+FUNC_DIR_NAME = "function"
+
+DIR_DATA = f"{BUILD_DIR}/data"
+DIR_PACK = f"{BUILD_DIR}/summon-stands"
+MC_NAMESPACE = f"{BUILD_DIR}/minecraft"
+MC_FUNC = f"{MC_NAMESPACE}/tags/{FUNC_DIR_NAME}"
+DIR_FUNC = f"{DIR_PACK}/{FUNC_DIR_NAME}"
+OUTPUT_FILE = f"{DIR_OUTPUT}/summon-stands_{MC_PACK_VERSION}_{VERSION[0]}.{VERSION[1]}.{VERSION[2]}"
 armor_elements = ["boots", "leggings", "chestplate", "helmet"]
 
 armor_class = ["leather", "iron", "diamond", "golden", "chainmail", "netherite"]
@@ -89,27 +94,24 @@ def makeSummon(x, y, z, material, trim, type):
     out += "}"
     return out
 
+def checkDirectories():
+    Path(DIR_FUNC).mkdir(parents=True, exist_ok=True)
+    Path(MC_FUNC).mkdir(parents=True, exist_ok=True)
+
+
+        
 def main():
 
     x_off = 1
     y_off = 0
     z_off = -1
     commands = []
-
-    if not os.path.exists(DIR_OUTPUT):
-        os.mkdir(DIR_OUTPUT)
     
-    if not os.path.exists(DIR_DATA):
-        os.mkdir(DIR_DATA)
-
-    if not os.path.exists(DIR_PACK):
-        os.mkdir(DIR_PACK)
-
-    if not os.path.exists(DIR_FUNC):
-        os.mkdir(DIR_FUNC)
+    checkDirectories()
 
     trim_x_off = 1
     trim_commands = []
+    print("BUILDING TRIM COMMANDS")
     for trim in trims:
         # Generate Each Trim Type
         for mat in materials:
@@ -132,17 +134,20 @@ def main():
             for cmd in trim_commands:
                 file.write(cmd + "\n")
     # print(commands)
+    print("#################################################################################")
 
 
     with open(f"{DIR_FUNC}/load_all.mcfunction", "w") as file:
+        print("WRITING LOAD ALL FUNCTION")
         for cmd in commands:
             file.write(cmd + "\n")
 
     # Add the load.mcfunction file
     with open(f"{DIR_FUNC}/load.mcfunction", "w") as file:
+        print("WRITING PACK LOAD FUNCTION")
         file.write("# Load all functions")
 
-    with open(f"{DIR_OUTPUT}/pack.mcmeta", "w") as file:
+    with open(f"{BUILD_DIR}/pack.mcmeta", "w") as file:
         print("Writing Pack meta data")
         mcmeta = {
             "pack": {
@@ -151,15 +156,20 @@ def main():
             }
         }
         json.dump(mcmeta, file, indent=4)
+        
+    with open(f"{MC_FUNC}/load.json", "w") as file:
+        print("Writing Minecraft Load JSON")
+        mcload = {
+            "values": [
+                "summon-stands:load"
+            ]
+        }
+        
 
     # Create ZIP
-    final_output = zipfile.ZipFile(OUTPUT_FILE, "w", zipfile.ZIP_DEFLATED)
-    final_output.write(DIR_OUTPUT)
-    with zipfile.ZipFile(OUTPUT_FILE, 'w', zipfile.ZIP_DEFLATED) as zfile:
-        for folder, subs, files in os.walk(DIR_OUTPUT):
-            for file in files:
-                p = os.path.join(folder, file)
-                zfile.write(p, arcname=os.path.relpath(p, DIR_OUTPUT))
+    print("WRITING ZIP FILE")
+    make_archive(OUTPUT_FILE, "zip", BUILD_DIR)
+
 
 
 if __name__ == "__main__":
